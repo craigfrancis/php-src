@@ -1811,9 +1811,16 @@ ZEND_API zend_result ZEND_FASTCALL concat_function(zval *result, zval *op1, zval
 {
     zval *orig_op1 = op1;
 	zval op1_copy, op2_copy;
-
+    bool literal = false;
+    
 	ZVAL_UNDEF(&op1_copy);
 	ZVAL_UNDEF(&op2_copy);
+
+    if (UNEXPECTED(
+        (Z_TYPE_P(op1) == IS_STRING && Z_TYPE_P(op2) == IS_STRING) && 
+        (ZSTR_IS_LITERAL(Z_STR_P(op1)) && ZSTR_IS_LITERAL(Z_STR_P(op2))))) {
+        literal = true;
+    }
 
 	do {
 	 	if (UNEXPECTED(Z_TYPE_P(op1) != IS_STRING)) {
@@ -1907,6 +1914,12 @@ ZEND_API zend_result ZEND_FASTCALL concat_function(zval *result, zval *op1, zval
 		memcpy(ZSTR_VAL(result_str) + op1_len, Z_STRVAL_P(op2), op2_len);
 		ZSTR_VAL(result_str)[result_len] = '\0';
 	}
+
+    if (literal) {
+        ZSTR_SET_LITERAL(&Z_STR_P(result));
+    } else {
+        ZSTR_UNSET_LITERAL(&Z_STR_P(result));
+    }
 
 	zval_ptr_dtor_str(&op1_copy);
 	zval_ptr_dtor_str(&op2_copy);

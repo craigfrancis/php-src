@@ -330,6 +330,50 @@ static zend_always_inline void zend_string_release_ex(zend_string *s, bool persi
 	}
 }
 
+static zend_always_inline zend_string* zend_string_set_literal(zend_string *s) {
+    if (UNEXPECTED(GC_TYPE_INFO(s) & IS_STR_LITERAL)) {
+        return s;
+    }
+
+    if (EXPECTED(GC_REFCOUNT(s) == 1)) {
+        GC_TYPE_INFO(s) |= IS_STR_LITERAL;        
+        return s;
+    }
+
+    zend_string *literal = 
+        zend_string_dup(s, GC_FLAGS(s) & IS_STR_PERSISTENT);
+
+    zend_string_release(s);
+
+    GC_TYPE_INFO(literal) |= IS_STR_LITERAL;
+
+    return literal;
+}
+
+static zend_always_inline zend_string* zend_string_unset_literal(zend_string *s) {
+    if (UNEXPECTED(!(GC_TYPE_INFO(s) & IS_STR_LITERAL))) {
+        return s;
+    }
+
+    if (EXPECTED(GC_REFCOUNT(s) == 1)) {
+        GC_TYPE_INFO(s) &= ~IS_STR_LITERAL;        
+        return s;
+    }
+
+    zend_string *literal = 
+        zend_string_dup(s, GC_FLAGS(s) & IS_STR_PERSISTENT);
+
+    zend_string_release(s);
+
+    GC_TYPE_INFO(literal) &= ~IS_STR_LITERAL;
+
+    return literal;
+}
+
+#define ZSTR_IS_LITERAL(s)     (GC_TYPE_INFO(s) & IS_STR_LITERAL)
+#define ZSTR_SET_LITERAL(s)    *(s) = zend_string_set_literal(*(s))
+#define ZSTR_UNSET_LITERAL(s)  *(s) = zend_string_unset_literal(*(s))
+
 #if defined(__GNUC__) && (defined(__i386__) || (defined(__x86_64__) && !defined(__ILP32__)))
 BEGIN_EXTERN_C()
 ZEND_API bool ZEND_FASTCALL zend_string_equal_val(zend_string *s1, zend_string *s2);

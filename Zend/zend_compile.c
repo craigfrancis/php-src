@@ -6389,6 +6389,8 @@ static void zend_compile_attributes(HashTable **attributes, zend_ast *ast, uint3
 			zend_string *name = zend_resolve_class_name_ast(el->child[0]);
 			zend_ast_list *args = el->child[1] ? zend_ast_get_list(el->child[1]) : NULL;
 
+			ZSTR_SET_LITERAL(&name);
+
 			uint32_t flags = (CG(active_op_array)->fn_flags & ZEND_ACC_STRICT_TYPES)
 				? ZEND_ATTRIBUTE_STRICT_TYPES : 0;
 			attr = zend_add_attribute(
@@ -6414,6 +6416,8 @@ static void zend_compile_attributes(HashTable **attributes, zend_ast *ast, uint3
 						arg_ast_ptr = &arg_ast->child[1];
 						uses_named_args = 1;
 
+						ZSTR_SET_LITERAL(&attr->args[j].name);
+						
 						for (uint32_t k = 0; k < j; k++) {
 							if (attr->args[k].name &&
 									zend_string_equals(attr->args[k].name, attr->args[j].name)) {
@@ -6427,6 +6431,10 @@ static void zend_compile_attributes(HashTable **attributes, zend_ast *ast, uint3
 					}
 
 					zend_const_expr_to_zval(&attr->args[j].value, arg_ast_ptr);
+					
+					if (Z_TYPE(attr->args[j].value) == IS_STRING) {
+						ZSTR_SET_LITERAL(&Z_STR(attr->args[j].value));
+					}
 				}
 			}
 		}
@@ -6945,7 +6953,8 @@ zend_string *zend_begin_method_decl(zend_op_array *op_array, zend_string *name, 
 	}
 
 	op_array->scope = ce;
-	op_array->function_name = zend_string_copy(name);
+	op_array->function_name = zend_string_copy(name);	
+	ZSTR_SET_LITERAL(&op_array->function_name);
 
 	lcname = zend_string_tolower(name);
 	lcname = zend_new_interned_string(lcname);
@@ -6980,6 +6989,8 @@ static void zend_begin_func_decl(znode *result, zend_op_array *op_array, zend_as
 
 	unqualified_name = decl->name;
 	op_array->function_name = name = zend_prefix_with_ns(unqualified_name);
+	
+	ZSTR_SET_LITERAL(&op_array->function_name);
 	lcname = zend_string_tolower(name);
 
 	if (FC(imports_function)) {
@@ -7178,6 +7189,8 @@ void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t flags, z
 		zval value_zv;
 		zend_type type = ZEND_TYPE_INIT_NONE(0);
 
+		ZSTR_SET_LITERAL(&name);
+
 		if (type_ast) {
 			type = zend_compile_typename(type_ast, /* force_allow_null */ 0);
 
@@ -7226,10 +7239,17 @@ void zend_compile_prop_decl(zend_ast *ast, zend_ast *type_ast, uint32_t flags, z
 						ZSTR_VAL(ce->name), ZSTR_VAL(name), ZSTR_VAL(str));
 				}
 			}
+			if (Z_TYPE(value_zv) == IS_STRING) {
+				ZSTR_SET_LITERAL(&Z_STR(value_zv));
+			}
 		} else if (!ZEND_TYPE_IS_SET(type)) {
 			ZVAL_NULL(&value_zv);
 		} else {
 			ZVAL_UNDEF(&value_zv);
+		}
+
+		if (Z_TYPE(value_zv) == IS_STRING) {
+			ZSTR_SET_LITERAL(&Z_STR(value_zv));
 		}
 
 		info = zend_declare_typed_property(ce, name, &value_zv, flags, doc_comment, type);
@@ -7497,6 +7517,8 @@ void zend_compile_class_decl(znode *result, zend_ast *ast, bool toplevel) /* {{{
 		zend_assert_valid_class_name(unqualified_name);
 		name = zend_prefix_with_ns(unqualified_name);
 		name = zend_new_interned_string(name);
+		ZSTR_SET_LITERAL(&name);
+
 		lcname = zend_string_tolower(name);
 
 		if (FC(imports)) {
@@ -8310,11 +8332,20 @@ static bool zend_try_ct_eval_array(zval *result, zend_ast *ast) /* {{{ */
 			}
 		}
 
+        if (Z_TYPE_P(value) == IS_STRING) {
+            ZSTR_SET_LITERAL(&Z_STR_P(value));
+        }
+
 		Z_TRY_ADDREF_P(value);
 
 		key_ast = elem_ast->child[1];
 		if (key_ast) {
 			zval *key = zend_ast_get_zval(key_ast);
+
+			if (Z_TYPE_P(key) == IS_STRING) {
+                ZSTR_SET_LITERAL(&Z_STR_P(key));
+            }
+
 			switch (Z_TYPE_P(key)) {
 				case IS_LONG:
 					zend_hash_index_update(Z_ARRVAL_P(result), Z_LVAL_P(key), value);
@@ -9965,6 +9996,7 @@ zend_op *zend_compile_var(znode *result, zend_ast *ast, uint32_t type, bool by_r
 	uint32_t checkpoint = zend_short_circuiting_checkpoint();
 	zend_op *opcode = zend_compile_var_inner(result, ast, type, by_ref);
 	zend_short_circuiting_commit(checkpoint, result, ast);
+
 	return opcode;
 }
 

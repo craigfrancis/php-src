@@ -952,6 +952,8 @@ function realpath_cache_size(): int {}
 
 /* formatted_print.c */
 
+function lsprintf(string $format, mixed ... $values): string {}
+
 function sprintf(string $format, mixed ...$values): string {}
 
 function printf(string $format, mixed ...$values): int {}
@@ -1421,6 +1423,8 @@ function is_array(mixed $value): bool {}
 function is_object(mixed $value): bool {}
 
 function is_scalar(mixed $value): bool {}
+
+function is_literal(mixed $value): bool {}
 
 /** @param string $callable_name */
 function is_callable(mixed $value, bool $syntax_only = false, &$callable_name = null): bool {}

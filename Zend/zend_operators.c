@@ -1891,6 +1891,11 @@ ZEND_API zend_result ZEND_FASTCALL concat_function(zval *result, zval *op1, zval
 		if (result == op1 && Z_REFCOUNTED_P(result)) {
 			/* special case, perform operations on result */
 			result_str = zend_string_extend(Z_STR_P(result), result_len, 0);
+			if (UNEXPECTED(
+			    (Z_TYPE_P(op1) == IS_STRING && Z_TYPE_P(op2) == IS_STRING) && 
+			    (ZSTR_IS_LITERAL(Z_STR_P(op1))))) {
+			    ZSTR_UNSET_LITERAL(&result_str);
+			}
 		} else {
 			result_str = zend_string_alloc(result_len, 0);
 			memcpy(ZSTR_VAL(result_str), Z_STRVAL_P(op1), op1_len);

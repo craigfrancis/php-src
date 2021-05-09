@@ -19,6 +19,7 @@
 #include "ext/standard/head.h"
 #include "php_string.h"
 #include "zend_execute.h"
+#include "zend_exceptions.h"
 #include <stdio.h>
 
 #include <locale.h>
@@ -772,6 +773,50 @@ PHP_FUNCTION(sprintf)
 	if (result == NULL) {
 		RETURN_THROWS();
 	}
+	RETVAL_STR(result);
+}
+/* }}} */
+
+/* {{{ Return a formatted literal string */
+PHP_FUNCTION(lsprintf)
+{
+	zend_string *result;
+	zend_string *format;
+	zval *args, *arg;
+	int argc;
+
+	ZEND_PARSE_PARAMETERS_START(1, -1)
+		Z_PARAM_STR(format)
+		Z_PARAM_VARIADIC('*', args, argc)
+	ZEND_PARSE_PARAMETERS_END();
+
+    if (!ZSTR_IS_LITERAL(format)) {
+        zend_throw_error(zend_ce_value_error, "format must be a literal string");
+        return;
+    }
+
+    for (arg = args; arg < (args + argc); arg++) {
+        if (Z_TYPE_P(arg) > IS_STRING) {
+            zend_throw_error(zend_ce_value_error, 
+                "values must not contain non scalar variables");
+            return;
+        }
+
+        if (Z_TYPE_P(arg) == IS_STRING) {
+            if (!ZSTR_IS_LITERAL(Z_STR_P(arg))) {
+                zend_throw_error(zend_ce_value_error, 
+                    "values must not contain non literal strings");
+                return;
+            }
+        }
+    }
+
+	result = php_formatted_print(ZSTR_VAL(format), ZSTR_LEN(format), args, argc, 1);
+	if (result == NULL) {
+		RETURN_THROWS();
+	}
+
+	ZSTR_SET_LITERAL(&result);
 	RETVAL_STR(result);
 }
 /* }}} */

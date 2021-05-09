@@ -205,7 +205,7 @@ static zend_string* ZEND_FASTCALL zend_new_interned_string_permanent(zend_string
 		ZSTR_H(str) = h;
 	}
 
-	return zend_add_interned_string(str, &interned_strings_permanent, IS_STR_PERMANENT);
+	return zend_add_interned_string(str, &interned_strings_permanent, IS_STR_PERMANENT|IS_STR_LITERAL);
 }
 
 static zend_string* ZEND_FASTCALL zend_new_interned_string_request(zend_string *str)
@@ -246,7 +246,7 @@ static zend_string* ZEND_FASTCALL zend_new_interned_string_request(zend_string *
 		ZSTR_H(str) = h;
 	}
 
-	ret = zend_add_interned_string(str, &CG(interned_strings), 0);
+	ret = zend_add_interned_string(str, &CG(interned_strings), IS_STR_LITERAL);
 
 	return ret;
 }

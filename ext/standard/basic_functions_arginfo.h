@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 810b8bfbdf037702fcaec2ff81998c2bc2cefae8 */
+ * Stub hash: 2704abd563ef393af755e723069c739b1190d0aa */
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_set_time_limit, 0, 1, _IS_BOOL, 0)
 	ZEND_ARG_TYPE_INFO(0, seconds, IS_LONG, 0)
@@ -1460,10 +1460,12 @@ ZEND_END_ARG_INFO()
 
 #define arginfo_realpath_cache_size arginfo_ob_get_level
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_sprintf, 0, 1, IS_STRING, 0)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_lsprintf, 0, 1, IS_STRING, 0)
 	ZEND_ARG_TYPE_INFO(0, format, IS_STRING, 0)
 	ZEND_ARG_VARIADIC_TYPE_INFO(0, values, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
+
+#define arginfo_sprintf arginfo_lsprintf
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_printf, 0, 1, IS_LONG, 0)
 	ZEND_ARG_TYPE_INFO(0, format, IS_STRING, 0)
@@ -1748,7 +1750,7 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_MASK_EX(arginfo_getrusage, 0, 0, MAY_BE_ARRAY|MA
 ZEND_END_ARG_INFO()
 #endif
 
-#define arginfo_pack arginfo_sprintf
+#define arginfo_pack arginfo_lsprintf
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_MASK_EX(arginfo_unpack, 0, 2, MAY_BE_ARRAY|MAY_BE_FALSE)
 	ZEND_ARG_TYPE_INFO(0, format, IS_STRING, 0)
@@ -2087,6 +2089,8 @@ ZEND_END_ARG_INFO()
 #define arginfo_is_object arginfo_boolval
 
 #define arginfo_is_scalar arginfo_boolval
+
+#define arginfo_is_literal arginfo_boolval
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_is_callable, 0, 1, _IS_BOOL, 0)
 	ZEND_ARG_TYPE_INFO(0, value, IS_MIXED, 0)
@@ -2620,6 +2624,7 @@ ZEND_FUNCTION(disk_total_space);
 ZEND_FUNCTION(disk_free_space);
 ZEND_FUNCTION(realpath_cache_get);
 ZEND_FUNCTION(realpath_cache_size);
+ZEND_FUNCTION(lsprintf);
 ZEND_FUNCTION(sprintf);
 ZEND_FUNCTION(printf);
 ZEND_FUNCTION(vprintf);
@@ -2796,6 +2801,7 @@ ZEND_FUNCTION(is_string);
 ZEND_FUNCTION(is_array);
 ZEND_FUNCTION(is_object);
 ZEND_FUNCTION(is_scalar);
+ZEND_FUNCTION(is_literal);
 ZEND_FUNCTION(is_callable);
 ZEND_FUNCTION(is_iterable);
 ZEND_FUNCTION(is_countable);
@@ -3261,6 +3267,7 @@ static const zend_function_entry ext_functions[] = {
 	ZEND_FALIAS(diskfreespace, disk_free_space, arginfo_diskfreespace)
 	ZEND_FE(realpath_cache_get, arginfo_realpath_cache_get)
 	ZEND_FE(realpath_cache_size, arginfo_realpath_cache_size)
+	ZEND_FE(lsprintf, arginfo_lsprintf)
 	ZEND_FE(sprintf, arginfo_sprintf)
 	ZEND_FE(printf, arginfo_printf)
 	ZEND_FE(vprintf, arginfo_vprintf)
@@ -3449,6 +3456,7 @@ static const zend_function_entry ext_functions[] = {
 	ZEND_FE(is_array, arginfo_is_array)
 	ZEND_FE(is_object, arginfo_is_object)
 	ZEND_FE(is_scalar, arginfo_is_scalar)
+	ZEND_FE(is_literal, arginfo_is_literal)
 	ZEND_FE(is_callable, arginfo_is_callable)
 	ZEND_FE(is_iterable, arginfo_is_iterable)
 	ZEND_FE(is_countable, arginfo_is_countable)

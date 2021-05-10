@@ -125,6 +125,8 @@ static const zend_module_dep standard_deps[] = { /* {{{ */
 };
 /* }}} */
 
+PHPAPI zend_class_entry *literal_string_required_error_ce;
+
 zend_module_entry basic_functions_module = { /* {{{ */
 	STANDARD_MODULE_HEADER_EX,
 	NULL,
@@ -287,6 +289,7 @@ PHP_MINIT_FUNCTION(basic) /* {{{ */
 	php_register_incomplete_class_handlers();
 
 	assertion_error_ce = register_class_AssertionError(zend_ce_error);
+	literal_string_required_error_ce = register_class_LiteralStringRequiredError(zend_ce_error);
 
 	REGISTER_LONG_CONSTANT("CONNECTION_ABORTED", PHP_CONNECTION_ABORTED, CONST_CS | CONST_PERSISTENT);
 	REGISTER_LONG_CONSTANT("CONNECTION_NORMAL",  PHP_CONNECTION_NORMAL,  CONST_CS | CONST_PERSISTENT);
@@ -2688,3 +2691,105 @@ PHP_FUNCTION(sys_getloadavg)
 }
 /* }}} */
 #endif
+
+
+static int check_is_literal(zval *piece, int position)
+{
+	if (Z_TYPE_P(piece) != IS_STRING) {
+		zend_throw_exception_ex(
+				literal_string_required_error_ce,
+				0,
+				"Only literal strings allowed. Type %s found at position %d",
+				zend_zval_type_name(piece),
+				position
+		);
+		return -1;
+	}
+
+	if(!ZSTR_IS_LITERAL(Z_STR_P(piece))) {
+		zend_throw_exception_ex(
+			literal_string_required_error_ce,
+			0,
+			"Non-literal string found at position %d",
+			position
+		);
+		return -1;
+	}
+
+	return 0;
+}
+
+
+/* {{{ */
+PHP_FUNCTION(literal_concat)
+{
+	zval *pieces = NULL;
+	int pieces_count = -1;
+	int position = 0;
+	int ok;
+
+	ZEND_PARSE_PARAMETERS_START(1, -1)
+		Z_PARAM_VARIADIC('+', pieces, pieces_count)
+	ZEND_PARSE_PARAMETERS_END();
+
+	for (position = 0; position < pieces_count; position++) {
+		ok = check_is_literal(&pieces[position], (position + 1));
+		if (ok != 0) {
+			// Exception is set inside check_is_literal
+			RETURN_THROWS();
+		}
+	}
+
+	zend_string *glue = zend_string_init("", sizeof("") - 1, 0);
+	php_implode(glue, Z_ARRVAL_P(pieces), return_value);
+	ZSTR_SET_LITERAL(&return_value);
+}
+/* }}} */
+
+
+/* {{{ */
+PHP_FUNCTION(literal_implode)
+{
+	zval *pieces;
+	zval *piece;
+
+	zval *glue;
+	int position = 0;
+	int ok;
+
+	ZEND_PARSE_PARAMETERS_START(2, 2)
+		Z_PARAM_ZVAL(glue)
+		Z_PARAM_ARRAY(pieces)
+	ZEND_PARSE_PARAMETERS_END();
+
+	if (!glue || Z_TYPE_P(glue) != IS_STRING) {
+		zend_throw_exception(
+			literal_string_required_error_ce,
+			"glue must be literal string",
+			0
+		);
+		RETURN_THROWS();
+	}
+
+	if(!ZSTR_IS_LITERAL(Z_STR_P(glue))) {
+		zend_throw_exception(
+			literal_string_required_error_ce,
+			"glue must be literal string",
+			0
+		);
+		RETURN_THROWS();
+	}
+
+	ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(pieces), piece) {
+		ok = check_is_literal(piece, position);
+		if (ok != 0) {
+			// Exception is set inside check_is_literal
+			RETURN_THROWS();
+		}
+		position += 1;
+	} ZEND_HASH_FOREACH_END();
+
+	php_implode(Z_STR_P(glue), Z_ARRVAL_P(pieces), return_value);
+	ZSTR_SET_LITERAL(&return_value);
+}
+/* }}} */

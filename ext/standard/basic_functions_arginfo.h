@@ -588,6 +588,16 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_MASK_EX(arginfo_sys_getloadavg, 0, 0, MAY_BE_ARR
 ZEND_END_ARG_INFO()
 #endif
 
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_literal_implode, 0, 2, IS_STRING, 0)
+	ZEND_ARG_TYPE_INFO(0, glue, IS_STRING, 0)
+	ZEND_ARG_TYPE_INFO(0, pieces, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_literal_concat, 0, 1, IS_STRING, 0)
+	ZEND_ARG_TYPE_INFO(0, piece, IS_STRING, 0)
+	ZEND_ARG_VARIADIC_TYPE_INFO(0, pieces, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_MASK_EX(arginfo_get_browser, 0, 0, MAY_BE_OBJECT|MAY_BE_ARRAY|MAY_BE_FALSE)
 	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, user_agent, IS_STRING, 1, "null")
 	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, return_array, _IS_BOOL, 0, "false")
@@ -2390,6 +2400,8 @@ ZEND_FUNCTION(config_get_hash);
 #if defined(HAVE_GETLOADAVG)
 ZEND_FUNCTION(sys_getloadavg);
 #endif
+ZEND_FUNCTION(literal_implode);
+ZEND_FUNCTION(literal_concat);
 ZEND_FUNCTION(get_browser);
 ZEND_FUNCTION(crc32);
 ZEND_FUNCTION(crypt);
@@ -3021,6 +3033,8 @@ static const zend_function_entry ext_functions[] = {
 #if defined(HAVE_GETLOADAVG)
 	ZEND_FE(sys_getloadavg, arginfo_sys_getloadavg)
 #endif
+	ZEND_FE(literal_implode, arginfo_literal_implode)
+	ZEND_FE(literal_concat, arginfo_literal_concat)
 	ZEND_FE(get_browser, arginfo_get_browser)
 	ZEND_FE(crc32, arginfo_crc32)
 	ZEND_FE(crypt, arginfo_crypt)
@@ -3516,6 +3530,11 @@ static const zend_function_entry class_AssertionError_methods[] = {
 	ZEND_FE_END
 };
 
+
+static const zend_function_entry class_LiteralStringRequiredError_methods[] = {
+	ZEND_FE_END
+};
+
 static zend_class_entry *register_class___PHP_Incomplete_Class(void)
 {
 	zend_class_entry ce, *class_entry;
@@ -3533,6 +3552,16 @@ static zend_class_entry *register_class_AssertionError(zend_class_entry *class_e
 
 	INIT_CLASS_ENTRY(ce, "AssertionError", class_AssertionError_methods);
 	class_entry = zend_register_internal_class_ex(&ce, class_entry_Error);
+
+	return class_entry;
+}
+
+static zend_class_entry *register_class_LiteralStringRequiredError(zend_class_entry *class_entry_TypeError)
+{
+	zend_class_entry ce, *class_entry;
+
+	INIT_CLASS_ENTRY(ce, "LiteralStringRequiredError", class_LiteralStringRequiredError_methods);
+	class_entry = zend_register_internal_class_ex(&ce, class_entry_TypeError);
 
 	return class_entry;
 }

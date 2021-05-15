@@ -35,11 +35,8 @@ catch (LiteralStringRequiredError $e) {
     echo $e->getMessage(), "\n";
 }
 
-echo "Done\n";
-
 ?>
 --EXPECTF--
 Result of literal_concat is correctly the literal: 'zokfotpik'
 Non-literal string found at position 4
 Only literal strings allowed. Type stdClass found at position 3
-Done

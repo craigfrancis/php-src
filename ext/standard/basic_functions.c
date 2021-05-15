@@ -2723,10 +2723,15 @@ static int check_is_literal(zval *piece, int position)
 /* {{{ */
 PHP_FUNCTION(literal_concat)
 {
-	zval *pieces = NULL;
+
+	zval *pieces;
 	int pieces_count = -1;
+
+	zval pieces_all;
 	int position = 0;
 	int ok;
+
+	array_init(&pieces_all);
 
 	ZEND_PARSE_PARAMETERS_START(1, -1)
 		Z_PARAM_VARIADIC('+', pieces, pieces_count)
@@ -2738,11 +2743,13 @@ PHP_FUNCTION(literal_concat)
 			// Exception is set inside check_is_literal
 			RETURN_THROWS();
 		}
+		add_next_index_zval(&pieces_all, &pieces[position]);
 	}
 
-	zend_string *glue = zend_string_init("", sizeof("") - 1, 0);
-	php_implode(glue, Z_ARRVAL_P(pieces), return_value);
-	ZSTR_SET_LITERAL(&return_value);
+	zend_string *glue = zend_string_init("", 0, 0);
+	php_implode(glue, Z_ARRVAL(pieces_all), return_value);
+	ZSTR_SET_LITERAL(&Z_STR_P(return_value));
+
 }
 /* }}} */
 
@@ -2790,6 +2797,7 @@ PHP_FUNCTION(literal_implode)
 	} ZEND_HASH_FOREACH_END();
 
 	php_implode(Z_STR_P(glue), Z_ARRVAL_P(pieces), return_value);
-	ZSTR_SET_LITERAL(&return_value);
+	ZSTR_SET_LITERAL(&Z_STR_P(return_value));
+
 }
 /* }}} */

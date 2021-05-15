@@ -1298,7 +1298,7 @@ static bool is_generator_compatible_class_type(zend_string *name) {
 		|| zend_string_equals_literal_ci(name, "Generator");
 }
 
-static void zend_mark_function_as_generator() /* {{{ */
+static void zend_mark_function_as_generator(void) /* {{{ */
 {
 	if (!CG(active_op_array)->function_name) {
 		zend_error_noreturn(E_COMPILE_ERROR,
@@ -1508,7 +1508,7 @@ static bool zend_try_ct_eval_const(zval *zv, zend_string *name, bool is_fully_qu
 }
 /* }}} */
 
-static inline bool zend_is_scope_known() /* {{{ */
+static inline bool zend_is_scope_known(void) /* {{{ */
 {
 	if (!CG(active_op_array)) {
 		/* This can only happen when evaluating a default value string. */
@@ -1973,7 +1973,7 @@ void zend_verify_namespace(void) /* {{{ */
    Returns directory name component of path */
 ZEND_API size_t zend_dirname(char *path, size_t len)
 {
-	register char *end = path + len - 1;
+	char *end = path + len - 1;
 	unsigned int len_adjust = 0;
 
 #ifdef ZEND_WIN32
@@ -2327,7 +2327,7 @@ static void zend_short_circuiting_mark_inner(zend_ast *ast) {
 	}
 }
 
-static uint32_t zend_short_circuiting_checkpoint()
+static uint32_t zend_short_circuiting_checkpoint(void)
 {
 	return zend_stack_count(&CG(short_circuiting_opnums));
 }
@@ -2754,7 +2754,7 @@ static bool is_global_var_fetch(zend_ast *ast)
 	return ast->kind == ZEND_AST_DIM && is_globals_fetch(ast->child[0]);
 }
 
-static bool this_guaranteed_exists() /* {{{ */
+static bool this_guaranteed_exists(void) /* {{{ */
 {
 	zend_op_array *op_array = CG(active_op_array);
 	/* Instance methods always have a $this.
@@ -6484,7 +6484,7 @@ void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32_t fall
 			arg_infos->type = zend_compile_typename(
 				return_type_ast, /* force_allow_null */ 0);
 			ZEND_TYPE_FULL_MASK(arg_infos->type) |= _ZEND_ARG_INFO_FLAGS(
-				(op_array->fn_flags & ZEND_ACC_RETURN_REFERENCE) != 0, /* is_variadic */ 0);
+				(op_array->fn_flags & ZEND_ACC_RETURN_REFERENCE) != 0, /* is_variadic */ 0, /* is_tentative */ 0);
 		} else {
 			arg_infos->type = (zend_type) ZEND_TYPE_INIT_CODE(fallback_return_type, 0, 0);
 		}
@@ -6614,7 +6614,7 @@ void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast, uint32_t fall
 				zend_alloc_cache_slots(zend_type_get_num_classes(arg_info->type));
 		}
 
-		uint32_t arg_info_flags = _ZEND_ARG_INFO_FLAGS(is_ref, is_variadic)
+		uint32_t arg_info_flags = _ZEND_ARG_INFO_FLAGS(is_ref, is_variadic, /* is_tentative */ 0)
 			| (visibility ? _ZEND_IS_PROMOTED_BIT : 0);
 		ZEND_TYPE_FULL_MASK(arg_info->type) |= arg_info_flags;
 		if (opcode == ZEND_RECV) {
@@ -7770,11 +7770,19 @@ static void zend_compile_enum_case(zend_ast *ast)
 
 	zval value_zv;
 	zend_const_expr_to_zval(&value_zv, &const_enum_init_ast);
-	zend_class_constant *c = zend_declare_class_constant_ex(enum_class, enum_case_name, &value_zv, ZEND_ACC_PUBLIC, NULL);
+
+	/* Doc comment has been appended as second last element in ZEND_AST_ENUM ast - attributes are conventionally last */
+	zend_ast *doc_comment_ast = ast->child[2];
+	zend_string *doc_comment = NULL;
+	if (doc_comment_ast) {
+		doc_comment = zend_string_copy(zend_ast_get_str(doc_comment_ast));
+	}
+
+	zend_class_constant *c = zend_declare_class_constant_ex(enum_class, enum_case_name, &value_zv, ZEND_ACC_PUBLIC, doc_comment);
 	ZEND_CLASS_CONST_FLAGS(c) |= ZEND_CLASS_CONST_IS_CASE;
 	zend_ast_destroy(const_enum_init_ast);
 
-	zend_ast *attr_ast = ast->child[2];
+	zend_ast *attr_ast = ast->child[3];
 	if (attr_ast) {
 		zend_compile_attributes(&c->attributes, attr_ast, 0, ZEND_ATTRIBUTE_TARGET_CLASS_CONST);
 	}

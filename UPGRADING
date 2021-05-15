@@ -57,6 +57,10 @@ PHP 8.1 UPGRADE NOTES
     This means that static variables in methods now behave the same way as
     static properties.
     RFC: https://wiki.php.net/rfc/static_variable_inheritance
+  . Most non-final internal methods now require overriding methods to declare a
+    compatible return type, otherwise a deprecated notice is emitted during
+    inheritance validation.
+    RFC: https://wiki.php.net/rfc/internal_method_return_types
 
 - Fileinfo:
   . The fileinfo functions now accept and return, respectively, finfo objects
@@ -120,6 +124,25 @@ PHP 8.1 UPGRADE NOTES
     types. You can restore the previous behavior by enabling the
     PDO::ATTR_STRINGIFY_FETCHES option.
 
+- PgSQL:
+  . The PgSQL functions now accept and return, respectively, \PgSql\Connection
+    objects instead of "pgsql link" resources. Return value checks using
+    is_resource() should be replaced with checks for `false`.
+  . The PgSQL functions now accept and return, respectively, \PgSql\Result
+    objects instead of "pgsql result" resources. Return value checks using
+    is_resource() should be replaced with checks for `false`.
+  . The PgSQL functions now accept and return, respectively, \PgSql\Lob
+    objects instead of "pgsql large object" resources. Return value checks
+    using is_resource() should be replaced with checks for `false`.
+
+- PSpell:
+  . The PSpell functions now accept and return, respectively, PSpell\Dictionary objects
+    instead of "pspell" resources. Return value checks using is_resource()
+    should be replaced with checks for `false`.
+  . The PSpell functions now accept and return, respectively, PSpell\Config objects
+    instead of "pspell config" resources. Return value checks using is_resource()
+    should be replaced with checks for `false`.
+
 - Standard:
   . version_compare() no longer accepts undocumented operator abbreviations.
   . htmlspecialchars(), htmlentities(), htmlspecialchars_decode(),
@@ -157,6 +180,9 @@ PHP 8.1 UPGRADE NOTES
     RFC: https://wiki.php.net/rfc/noreturn_type
   . Added support for fibers.
     RFC: https://wiki.php.net/rfc/fibers
+  . File uploads now provide an additional full_path key, which contains the
+    full path (rather than just the basename) of the uploaded file. This is
+    intended for use in conjunction with "upload webkitdirectory".
 
 - Curl:
   . Added CURLOPT_DOH_URL option.
@@ -254,6 +280,12 @@ PHP 8.1 UPGRADE NOTES
 ========================================
 3. Changes in SAPI modules
 ========================================
+
+- CLI:
+  . Using -a without the readline extension will now result in an error.
+    Previously, -a without readline had the same behavior as calling php without
+    any arguments, apart from printing an additional "Interactive mode enabled"
+    message. This mode was not, in fact, interactive.
 
 ========================================
 4. Deprecated Functionality
@@ -383,6 +415,9 @@ PHP 8.1 UPGRADE NOTES
 ========================================
 11. Changes to INI File Handling
 ========================================
+
+- The log_errors_max_len ini setting has been removed. It no longer had an
+  effect since PHP 8.0.
 
 ========================================
 12. Windows Support

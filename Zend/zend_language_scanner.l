@@ -905,7 +905,7 @@ ZEND_API void zend_multibyte_yyinput_again(zend_encoding_filter old_input_filter
 
 static zend_result zend_scan_escape_string(zval *zendlval, char *str, int len, char quote_type)
 {
-	register char *s, *t;
+	char *s, *t;
 	char *end;
 
 	if (len <= 1) {
@@ -1277,7 +1277,7 @@ static zend_result exit_nesting(char closing)
 	return SUCCESS;
 }
 
-static zend_result check_nesting_at_end()
+static zend_result check_nesting_at_end(void)
 {
 	if (!zend_stack_is_empty(&SCNG(nest_location_stack))) {
 		zend_nest_location *nest_loc = zend_stack_top(&SCNG(nest_location_stack));
@@ -2427,7 +2427,7 @@ inline_char_handler:
 
 
 <ST_IN_SCRIPTING>b?['] {
-	register char *s, *t;
+	char *s, *t;
 	char *end;
 	int bprefix = (yytext[0] != '\'') ? 1 : 0;
 

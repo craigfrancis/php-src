@@ -57,13 +57,23 @@
 
 #include "gd_compat.h"
 
-#include <gd.h>
-#include <gd_errors.h>
-#include <gdfontt.h>  /* 1 Tiny font */
-#include <gdfonts.h>  /* 2 Small font */
-#include <gdfontmb.h> /* 3 Medium bold font */
-#include <gdfontl.h>  /* 4 Large font */
-#include <gdfontg.h>  /* 5 Giant font */
+#ifdef HAVE_GD_BUNDLED
+# include "libgd/gd.h"
+# include "libgd/gd_errors.h"
+# include "libgd/gdfontt.h"  /* 1 Tiny font */
+# include "libgd/gdfonts.h"  /* 2 Small font */
+# include "libgd/gdfontmb.h" /* 3 Medium bold font */
+# include "libgd/gdfontl.h"  /* 4 Large font */
+# include "libgd/gdfontg.h"  /* 5 Giant font */
+#else
+# include <gd.h>
+# include <gd_errors.h>
+# include <gdfontt.h>  /* 1 Tiny font */
+# include <gdfonts.h>  /* 2 Small font */
+# include <gdfontmb.h> /* 3 Medium bold font */
+# include <gdfontl.h>  /* 4 Large font */
+# include <gdfontg.h>  /* 5 Giant font */
+#endif
 
 #if defined(HAVE_GD_FREETYPE) && defined(HAVE_GD_BUNDLED)
 # include <ft2build.h>
@@ -135,7 +145,7 @@ static void _php_image_create_from(INTERNAL_FUNCTION_PARAMETERS, int image_type,
 static void _php_image_output(INTERNAL_FUNCTION_PARAMETERS, int image_type, char *tn, void (*func_p)());
 static gdIOCtx *create_stream_context_from_zval(zval *to_zval);
 static gdIOCtx *create_stream_context(php_stream *stream, int close_stream);
-static gdIOCtx *create_output_context();
+static gdIOCtx *create_output_context(void);
 static int _php_image_type(char data[12]);
 
 /* output streaming (formerly gd_ctx.c) */
@@ -215,7 +225,7 @@ void php_gd_assign_libgdimageptr_as_extgdimage(zval *val, gdImagePtr image)
 	php_gd_exgdimage_from_zobj_p(Z_OBJ_P(val))->image = image;
 }
 
-static void php_gd_object_minit_helper()
+static void php_gd_object_minit_helper(void)
 {
 	gd_image_ce = register_class_GdImage();
 	gd_image_ce->create_object = php_gd_image_object_create;
